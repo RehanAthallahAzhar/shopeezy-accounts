@@ -4,8 +4,8 @@ import (
 	"net/http" // Untuk membuat response HTTP
 	"strings"  // Untuk manipulasi string
 
-	"github.com/rehanazhar/account-cashier-app/configs" // Mengambil konfigurasi dari file .env
-	"github.com/rehanazhar/account-cashier-app/models"
+	"github.com/rehanazhar/shopeezy-account/configs" // Mengambil konfigurasi dari file .env
+	"github.com/rehanazhar/shopeezy-account/models"
 
 	"github.com/golang-jwt/jwt/v5" // Library JWT untuk membuat dan memverifikasi token
 	"github.com/labstack/echo/v4"

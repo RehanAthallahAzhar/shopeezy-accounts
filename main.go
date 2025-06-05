@@ -9,11 +9,11 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 
-	"github.com/rehanazhar/account-cashier-app/databases"
-	"github.com/rehanazhar/account-cashier-app/handlers"
-	"github.com/rehanazhar/account-cashier-app/models"
-	"github.com/rehanazhar/account-cashier-app/repositories"
-	"github.com/rehanazhar/account-cashier-app/routes"
+	"github.com/rehanazhar/shopeezy-account/databases"
+	"github.com/rehanazhar/shopeezy-account/handlers"
+	"github.com/rehanazhar/shopeezy-account/models"
+	"github.com/rehanazhar/shopeezy-account/repositories"
+	"github.com/rehanazhar/shopeezy-account/routes"
 )
 
 func main() {

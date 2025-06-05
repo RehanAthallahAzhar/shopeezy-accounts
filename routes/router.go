@@ -2,8 +2,8 @@ package routes
 
 import (
 	"github.com/labstack/echo/v4"
-	"github.com/rehanazhar/account-cashier-app/handlers"
-	"github.com/rehanazhar/account-cashier-app/middlewares"
+	"github.com/rehanazhar/shopeezy-account/handlers"
+	"github.com/rehanazhar/shopeezy-account/middlewares"
 )
 
 func InitRoutes(e *echo.Echo, api *handlers.API) {

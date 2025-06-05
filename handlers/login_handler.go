@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"github.com/rehanazhar/account-cashier-app/helpers"
-	"github.com/rehanazhar/account-cashier-app/models"
+	"github.com/rehanazhar/shopeezy-account/helpers"
+	"github.com/rehanazhar/shopeezy-account/models"
 	"golang.org/x/crypto/bcrypt"
 )
 

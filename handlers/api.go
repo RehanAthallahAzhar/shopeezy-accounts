@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	repositories "github.com/rehanazhar/account-cashier-app/repositories"
+	repositories "github.com/rehanazhar/shopeezy-account/repositories"
 )
 
 // API struct yang akan memegang dependensi repository
