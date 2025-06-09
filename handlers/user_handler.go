@@ -3,11 +3,10 @@ package handlers
 import (
 	"errors"
 	"net/http"
-	"strconv"
 
+	"github.com/RehanAthallahAzhar/shopeezy-accounts/helpers"
+	"github.com/RehanAthallahAzhar/shopeezy-accounts/models"
 	"github.com/labstack/echo/v4"
-	"github.com/rehanazhar/shopeezy-account/helpers"
-	"github.com/rehanazhar/shopeezy-account/models"
 )
 
 func (api *API) FindAllUsers(c echo.Context) error {
@@ -65,7 +64,7 @@ func (api *API) CreateUser(c echo.Context) error {
 	return c.JSON(http.StatusCreated, models.SuccessResponse{
 		Message: "User created successfully",
 		Data: models.UserResponse{
-			Id:        user.Id,
+			Id:        user.ID,
 			Name:      user.Name,
 			Username:  user.Username,
 			Email:     user.Email,
@@ -82,11 +81,9 @@ func (api *API) FindUserById(c echo.Context) error {
 	// Ambil ID user dari parameter URL
 	id := c.Param("id")
 
-	idint, _ := strconv.ParseUint(id, 10, 32)
-
 	// Inisialisasi user
 	var user models.User
-	user, err := api.UserRepo.FindUserById(ctx, uint(idint))
+	user, err := api.UserRepo.FindUserById(ctx, id)
 	if err != nil {
 		if errors.Is(err, models.ErrProductNotFound) {
 			return c.JSON(http.StatusNotFound, models.ErrorResponse{Error: err.Error()})
@@ -98,7 +95,7 @@ func (api *API) FindUserById(c echo.Context) error {
 	return c.JSON(http.StatusOK, models.SuccessResponse{
 		Message: "User Founded",
 		Data: models.UserResponse{
-			Id:        user.Id,
+			Id:        user.ID,
 			Name:      user.Name,
 			Username:  user.Username,
 			Email:     user.Email,
@@ -112,14 +109,11 @@ func (api *API) FindUserById(c echo.Context) error {
 func (api *API) UpdateUser(c echo.Context) error {
 	ctx := c.Request().Context()
 
-	// Ambil ID user dari parameter URL
-	id := c.Param("id")
-
-	idint, _ := strconv.ParseUint(id, 10, 32)
+	userId := c.Get("userID").(string)
 
 	// Inisialisasi user
 	var user models.User
-	user, err := api.UserRepo.FindUserById(ctx, uint(idint))
+	user, err := api.UserRepo.FindUserById(ctx, userId)
 	if err != nil {
 		if errors.Is(err, models.ErrProductNotFound) {
 			return c.JSON(http.StatusNotFound, models.ErrorResponse{Error: "User not found!"})
@@ -141,7 +135,7 @@ func (api *API) UpdateUser(c echo.Context) error {
 		Password: helpers.HashPassword(req.Password),
 	}
 
-	err = api.UserRepo.UpdateUser(ctx, uint(idint), &user)
+	err = api.UserRepo.UpdateUser(ctx, userId, &user)
 	if err != nil {
 
 		if errors.Is(err, models.ErrProductNotFound) {
@@ -154,7 +148,7 @@ func (api *API) UpdateUser(c echo.Context) error {
 	return c.JSON(http.StatusOK, models.SuccessResponse{
 		Message: "User updated successfully",
 		Data: models.UserResponse{
-			Id:        user.Id,
+			Id:        user.ID,
 			Name:      user.Name,
 			Username:  user.Username,
 			Email:     user.Email,
@@ -170,9 +164,7 @@ func (api *API) DeleteUser(c echo.Context) error {
 	// Ambil ID user dari parameter URL
 	id := c.Param("id")
 
-	idint, _ := strconv.ParseUint(id, 10, 32)
-
-	_, err := api.UserRepo.FindUserById(ctx, uint(idint))
+	_, err := api.UserRepo.FindUserById(ctx, id)
 	if err != nil {
 		if errors.Is(err, models.ErrProductNotFound) {
 			return c.JSON(http.StatusNotFound, models.ErrorResponse{Error: "User not found"})
@@ -180,7 +172,7 @@ func (api *API) DeleteUser(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, models.ErrorResponse{Error: "Failed to retrieve user"})
 	}
 
-	err = api.UserRepo.DeleteUser(ctx, uint(idint))
+	err = api.UserRepo.DeleteUser(ctx, id)
 	if err != nil {
 		if errors.Is(err, models.ErrProductNotFound) {
 			return c.JSON(http.StatusNotFound, models.ErrorResponse{Error: "User not found!"})

@@ -3,7 +3,7 @@ package helpers
 import (
 	"time"
 
-	"github.com/rehanazhar/shopeezy-account/configs"
+	"github.com/RehanAthallahAzhar/shopeezy-accounts/configs"
 
 	"github.com/golang-jwt/jwt/v5"
 )

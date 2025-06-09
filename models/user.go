@@ -1,19 +1,34 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type User struct {
-	Id        uint      `json:"id" gorm:"primaryKey"`
-	Name      string    `json:"name"`
-	Username  string    `json:"username" gorm:"unique;not null"`
-	Email     string    `json:"email" gorm:"unique;not null"`
-	Password  string    `json:"password"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID        string         `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
+	Name      string         `json:"name"`
+	Username  string         `json:"username" gorm:"unique;not null"`
+	Email     string         `json:"email" gorm:"unique;not null"`
+	Password  string         `json:"password"`
+	Role      string         `gorm:"type:varchar(50);default:'user'"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
+}
+
+type UserAuthRequest struct {
+	Name      string `json:"name" validate:"required"`
+	Username  string `json:"username" validate:"required"`
+	Email     string `json:"email" validate:"required,email"`
+	Password  string `json:"password" validate:"required"`
+	Role      string `json:"role" validate:"required"`
+	TokenRole string `json:"token"`
 }
 
 type UserResponse struct {
-	Id        uint    `json:"id"`
+	Id        string  `json:"id"`
 	Name      string  `json:"name"`
 	Username  string  `json:"username"`
 	Email     string  `json:"email"`
@@ -28,6 +43,7 @@ type UserCreateRequest struct {
 	Username string `json:"username" binding:"required" gorm:"unique;not null"`
 	Email    string `json:"email" binding:"required" gorm:"unique;not null"`
 	Password string `json:"password" binding:"required"`
+	Role     string `gorm:"type:varchar(50);default:'user'"`
 }
 
 // Struct ini digunakan untuk menerima data saat proses update user

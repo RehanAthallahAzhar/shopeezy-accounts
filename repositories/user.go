@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/rehanazhar/shopeezy-account/models"
+	"github.com/RehanAthallahAzhar/shopeezy-accounts/models"
 	"gorm.io/gorm"
 )
 
@@ -13,7 +13,7 @@ type UserRepository struct {
 	db *gorm.DB
 }
 
-func NewProductRepository(db *gorm.DB) UserRepository {
+func NewUserRepository(db *gorm.DB) UserRepository {
 	return UserRepository{db}
 }
 
@@ -38,9 +38,9 @@ func (u *UserRepository) FindUserByUsername(ctx context.Context, username string
 	return user, nil
 }
 
-func (u *UserRepository) FindUserById(ctx context.Context, id uint) (models.User, error) {
+func (u *UserRepository) FindUserById(ctx context.Context, id string) (models.User, error) {
 	var user models.User
-	result := u.db.WithContext(ctx).First(&user, id)
+	result := u.db.WithContext(ctx).First(&user, "id = ?", id)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return models.User{}, models.ErrProductNotFound
@@ -57,7 +57,7 @@ func (u *UserRepository) CreateUser(ctx context.Context, user *models.User) erro
 	return nil
 }
 
-func (u *UserRepository) UpdateUser(ctx context.Context, id uint, user *models.User) error {
+func (u *UserRepository) UpdateUser(ctx context.Context, id string, user *models.User) error {
 	err := u.db.WithContext(ctx).Table("users").Where("id = ?", id).Updates(&user).Error
 	if err != nil {
 		return err
@@ -65,14 +65,15 @@ func (u *UserRepository) UpdateUser(ctx context.Context, id uint, user *models.U
 	return nil
 }
 
-func (u *UserRepository) DeleteUser(ctx context.Context, id uint) error {
-	result := u.db.WithContext(ctx).Delete(&models.User{}, id)
+func (u *UserRepository) DeleteUser(ctx context.Context, id string) error {
+	result := u.db.WithContext(ctx).Where("id = ?", id).Delete(&models.User{})
 	if result.Error != nil {
-		return result.Error
+		return fmt.Errorf("failed to delete user: %w", result.Error)
 	}
 
 	if result.RowsAffected == 0 {
-		return errors.New("product not found or already deleted")
+		return errors.New("user not found or already deleted")
 	}
+
 	return nil
 }

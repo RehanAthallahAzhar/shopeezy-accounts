@@ -1,11 +1,13 @@
 package helpers
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/go-playground/validator/v10" // Mengimpor package untuk validasi
-	"gorm.io/gorm"                           // Mengimpor GORM untuk menangani error terkait database
+	"github.com/labstack/echo/v4"            // Mengimpor GORM untuk menangani error terkait database
+	"gorm.io/gorm"
 )
 
 // TranslateErrorMessage menangani validasi dari validator.v10 dan duplikasi entri dari GORM
@@ -60,4 +62,19 @@ func TranslateErrorMessage(err error) map[string]string {
 func IsDuplicateEntryError(err error) bool {
 	// Mengecek apakah error merupakan duplikasi entri
 	return err != nil && strings.Contains(err.Error(), "Duplicate entry")
+}
+
+func GetUserID(c echo.Context) (uint, error) {
+	val := c.Get("userID")
+	if val == nil {
+		return 0, errors.New("user ID not found")
+	}
+	switch v := val.(type) {
+	case float64:
+		return uint(v), nil
+	case uint:
+		return v, nil
+	default:
+		return 0, errors.New("invalid user ID type")
+	}
 }

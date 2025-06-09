@@ -1,58 +1,44 @@
 package handlers
 
 import (
-	"errors"
 	"net/http"
 
+	"gorm.io/gorm"
+
+	"github.com/RehanAthallahAzhar/shopeezy-accounts/models"
 	"github.com/labstack/echo/v4"
-	"github.com/rehanazhar/shopeezy-account/helpers"
-	"github.com/rehanazhar/shopeezy-account/models"
 	"golang.org/x/crypto/bcrypt"
 )
 
-func (api *API) Login() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		ctx := c.Request().Context()
-
-		// Inisialisasi struct untuk menampung data dari request
-		var req = models.UserLoginRequest{}
-
-		// Validasi input dari request body menggunakan ShouldBindJSON
-		if err := c.Bind(&req); err != nil {
-			return c.JSON(http.StatusBadRequest, models.ErrorResponse{Error: "Bad Request: Invalid JSON format"})
-		}
-
-		user, err := api.UserRepo.FindUserByUsername(ctx, req.Username)
-		if err != nil {
-			if errors.Is(err, models.ErrProductNotFound) {
-				return c.JSON(http.StatusNotFound, models.ErrorResponse{Error: err.Error()})
-			}
-			return c.JSON(http.StatusInternalServerError, models.ErrorResponse{Error: "Failed to retrieve user"})
-		}
-
-		// Bandingkan password yang dimasukkan dengan password yang sudah di-hash di database
-		// Jika tidak cocok, kirimkan respons error Unauthorized
-		if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
-			return c.JSON(http.StatusUnauthorized, models.ErrorResponse{
-				Error: helpers.TranslateErrorMessage(err),
-			})
-		}
-
-		// Jika login berhasil, generate token untuk user
-		token := helpers.GenerateToken(user.Username)
-
-		// Kirimkan response sukses dengan status OK dan data user serta token
-		return c.JSON(http.StatusOK, models.SuccessResponse{
-			Message: "Login Success",
-			Data: models.UserResponse{
-				Id:        user.Id,
-				Name:      user.Name,
-				Username:  user.Username,
-				Email:     user.Email,
-				CreatedAt: user.CreatedAt.String(),
-				UpdatedAt: user.UpdatedAt.String(),
-				Token:     &token,
-			},
-		})
+func (api *API) LoginUser(c echo.Context) error {
+	req := new(models.UserAuthRequest)
+	if err := c.Bind(req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"message": "Invalid request"})
 	}
+
+	user, err := api.UserRepo.FindUserByUsername(c.Request().Context(), req.Username)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return c.JSON(http.StatusUnauthorized, map[string]string{"message": "Username atau password salah"})
+		}
+		c.Logger().Errorf("Gagal mencari user: %v", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"message": "user not found"})
+	}
+
+	// password verification
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "Username atau password salah"})
+	}
+
+	// Generate JWT
+	tokenString, err := api.TokenSvc.GenerateToken(user.ID, user.Username, user.Role)
+	if err != nil {
+		c.Logger().Errorf("Gagal generate token JWT: %v", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"message": "Gagal memproses login"})
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{
+		"message": "Login berhasil",
+		"token":   tokenString,
+	})
 }

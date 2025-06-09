@@ -1,57 +1,47 @@
 package middlewares
 
 import (
-	"net/http" // Untuk membuat response HTTP
-	"strings"  // Untuk manipulasi string
+	"context"
+	"net/http"
 
-	"github.com/rehanazhar/shopeezy-account/configs" // Mengambil konfigurasi dari file .env
-	"github.com/rehanazhar/shopeezy-account/models"
-
-	"github.com/golang-jwt/jwt/v5" // Library JWT untuk membuat dan memverifikasi token
+	"github.com/RehanAthallahAzhar/shopeezy-accounts/services" // Impor services Anda
 	"github.com/labstack/echo/v4"
 )
 
-// Ambil secret key dari environment variable
-// Jika tidak ada, gunakan default "secret_key"
-var jwtKey = []byte(configs.GetEnv("JWT_SECRET", "secret_key"))
+// AuthMiddlewareOptions berisi dependensi untuk middleware autentikasi
+type AuthMiddlewareOptions struct {
+	TokenService services.TokenService
+}
 
-func AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
+// AuthMiddleware adalah fungsi middleware untuk memvalidasi token untuk API REST.
+func AuthMiddleware(opts AuthMiddlewareOptions) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			authHeader := c.Request().Header.Get("Authorization")
+			if authHeader == "" || len(authHeader) < 7 || authHeader[:7] != "Bearer " {
+				return c.JSON(http.StatusUnauthorized, map[string]string{"message": "Token otentikasi tidak ditemukan atau format salah"})
+			}
+			token := authHeader[7:]
 
-		// Ambil header Authorization dari request
-		tokenString := c.Request().Header.Get("Authorization")
+			// Panggil TokenService untuk memvalidasi token
+			isValid, userId, username, userRole, errMsg, err := opts.TokenService.Validate(context.Background(), token)
+			if err != nil {
+				//Todo: tambahkan kasus dmn token expired
+				c.Logger().Errorf("Kesalahan validasi token: %v", err)
+				return c.JSON(http.StatusInternalServerError, map[string]string{"message": "Kesalahan server saat memvalidasi token"})
+			}
 
-		// Jika token kosong, kembalikan respons 401 Unauthorized
-		if tokenString == "" {
-			return c.JSON(http.StatusUnauthorized, models.ErrorResponse{
-				Error: "Token is required",
-			})
+			if !isValid {
+				return c.JSON(http.StatusUnauthorized, map[string]string{"message": "Token tidak valid: " + errMsg})
+			}
+
+			// Jika token valid, Anda bisa menyimpan informasi pengguna di Echo Context
+			c.Set("userID", userId)
+			c.Set("username", username)
+			c.Set("role", userRole)
+
+			// Lanjutkan ke handler berikutnya
+			return next(c)
 		}
-
-		// Hapus prefix "Bearer " dari token
-		// Header biasanya berbentuk: "Bearer <token>"
-		tokenString = strings.TrimPrefix(tokenString, "Bearer ")
-
-		// Buat struct untuk menampung klaim token
-		claims := &jwt.RegisteredClaims{}
-
-		// Parse token dan verifikasi tanda tangan dengan jwtKey
-		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-			// Kembalikan kunci rahasia untuk memverifikasi token
-			return jwtKey, nil
-		})
-
-		// Jika token tidak valid atau terjadi error saat parsing
-		if err != nil || !token.Valid {
-			return c.JSON(http.StatusUnauthorized, models.ErrorResponse{
-				Error: "Invalid Token",
-			})
-		}
-
-		// Simpan klaim "sub" (username) ke dalam context
-		c.Set("username", claims.Subject)
-
-		// Lanjut ke handler berikutnya
-		return next(c)
 	}
 }

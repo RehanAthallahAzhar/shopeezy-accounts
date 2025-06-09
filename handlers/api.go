@@ -1,24 +1,20 @@
 package handlers
 
 import (
-	repositories "github.com/rehanazhar/shopeezy-account/repositories"
+	"github.com/RehanAthallahAzhar/shopeezy-accounts/repositories"
+	"github.com/RehanAthallahAzhar/shopeezy-accounts/services"
 )
 
-// API struct yang akan memegang dependensi repository
 type API struct {
-	// UserRepo    repositories.UserRepository
-	// SessionRepo repositories.SessionsRepository
 	UserRepo repositories.UserRepository
+	TokenSvc services.TokenService
 }
 
-// NewHandler adalah konstruktor untuk API
-// Perbarui agar menerima semua repository
-func NewHandler(
-	// userRepo repositories.UserRepository,
-	// sessionRepo repositories.SessionsRepository,
-	userRepo repositories.UserRepository,
-) *API {
+func NewHandler(userRepo repositories.UserRepository, tokenSvc services.TokenService) *API {
 	return &API{
 		UserRepo: userRepo,
+		TokenSvc: tokenSvc,
 	}
 }
+
+// LoginUser menangani permintaan login pengguna

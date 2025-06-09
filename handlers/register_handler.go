@@ -1,51 +1,51 @@
 package handlers
 
 import (
-	"errors"
 	"net/http"
 
+	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
+
+	"github.com/RehanAthallahAzhar/shopeezy-accounts/helpers"
+	"github.com/RehanAthallahAzhar/shopeezy-accounts/models"
 	"github.com/labstack/echo/v4"
-	"github.com/rehanazhar/shopeezy-account/helpers"
-	"github.com/rehanazhar/shopeezy-account/models"
 )
 
-// Register menangani proses registrasi user baru
-func (api *API) Register() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		ctx := c.Request().Context()
-		// Inisialisasi struct untuk menangkap data request
-		var req = models.UserCreateRequest{}
-
-		if err := c.Bind(&req); err != nil {
-			return c.JSON(http.StatusBadRequest, models.ErrorResponse{Error: "Invalid JSON format"})
-		}
-
-		// Buat data user baru dengan password yang sudah di-hash
-		user := models.User{
-			Name:     req.Name,
-			Username: req.Username,
-			Email:    req.Email,
-			Password: helpers.HashPassword(req.Password),
-		}
-
-		err := api.UserRepo.CreateUser(ctx, &user)
-		if err != nil {
-			if errors.Is(err, models.ErrProductNotFound) {
-				return c.JSON(http.StatusNotFound, models.ErrorResponse{Error: err.Error()})
-			}
-			return c.JSON(http.StatusInternalServerError, models.ErrorResponse{Error: "Failed to retrieve user"})
-		}
-
-		return c.JSON(http.StatusCreated, models.SuccessResponse{
-			Message: "User created successfully",
-			Data: models.UserResponse{
-				Id:        user.Id,
-				Name:      user.Name,
-				Username:  user.Username,
-				Email:     user.Email,
-				CreatedAt: user.CreatedAt.Format("2006-01-02 15:04:05"),
-				UpdatedAt: user.UpdatedAt.Format("2006-01-02 15:04:05"),
-			},
-		})
+func (api *API) RegisterUser(c echo.Context) error {
+	req := new(models.UserAuthRequest)
+	if err := c.Bind(req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"message": "Permintaan tidak valid"})
 	}
+
+	if req.Role != "user" && req.TokenRole != "secret password from HRD or IT Manager" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"message": "Role token salah"})
+	}
+
+	// Hash password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		c.Logger().Errorf("Gagal hash password: %v", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"message": "Gagal memproses registrasi"})
+	}
+
+	newUserID := helpers.GenerateNewUserID()
+	newUser := &models.User{
+		ID:       newUserID, // Set ID
+		Name:     req.Name,
+		Username: req.Username,
+		Email:    req.Email,
+		Password: string(hashedPassword),
+		Role:     "user", // role default
+	}
+
+	// Simpan pengguna ke database
+	if err := api.UserRepo.CreateUser(c.Request().Context(), newUser); err != nil {
+		if err == gorm.ErrDuplicatedKey { // Contoh penanganan jika username sudah ada
+			return c.JSON(http.StatusConflict, map[string]string{"message": "Username sudah terdaftar"})
+		}
+		c.Logger().Errorf("Gagal menyimpan user baru: %v", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"message": "Gagal menyimpan user"})
+	}
+
+	return c.JSON(http.StatusCreated, map[string]string{"message": "Registrasi berhasil"})
 }
