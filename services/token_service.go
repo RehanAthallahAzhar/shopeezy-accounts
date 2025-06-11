@@ -101,7 +101,6 @@ func (s *tokenServiceImpl) Validate(ctx context.Context, tokenString string) (bo
 }
 
 // GenerateToken membuat JWT baru untuk pengguna yang diberikan.
-// KOREKSI: Tambahkan 'role' sebagai parameter
 func (s *tokenServiceImpl) GenerateToken(userID string, username string, role string) (string, error) {
 	claims := jwt.MapClaims{
 		"user_id": userID,

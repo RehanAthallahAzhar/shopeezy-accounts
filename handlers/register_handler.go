@@ -35,7 +35,7 @@ func (api *API) RegisterUser(c echo.Context) error {
 		Username: req.Username,
 		Email:    req.Email,
 		Password: string(hashedPassword),
-		Role:     "user", // role default
+		Role:     req.Role,
 	}
 
 	// Simpan pengguna ke database
