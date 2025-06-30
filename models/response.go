@@ -1,10 +1,6 @@
 package models
 
-import "errors"
-
-var ErrProductNotFound = errors.New("product not found")
-var ErrCartItemNotFound = errors.New("cart item not found")
-var ErrInsufficientStock = errors.New("insufficient stock for this quantity")
+// ErrorResponse untuk response error standar
 
 type ErrorResponse struct {
 	Error any `json:"error"`

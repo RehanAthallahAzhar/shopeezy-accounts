@@ -13,7 +13,7 @@ import (
 
 type Postgres struct{}
 
-func (p *Postgres) Connect(ctx context.Context, creds *model.Credential) (*gorm.DB, error) {
+func (p *Postgres) NewDB(ctx context.Context, creds *model.Credential) (*gorm.DB, error) {
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%d sslmode=disable TimeZone=Asia/Jakarta",
 		creds.Host, creds.Username, creds.Password, creds.DatabaseName, creds.Port)
 
