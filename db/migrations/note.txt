@@ -1,4 +1,4 @@
-Skenario 3: Memperbaiki Database yang "Kotor" 
+Skenario 1: Memperbaiki Database yang "Kotor" 
 Ini terjadi jika migrate up gagal di tengah jalan, atau Anda mengubah file yang sudah dijalankan. Database akan "terkunci" di versi tertentu dan tidak tahu harus berbuat apa.
 
 Inilah saatnya Anda menggunakan force dan down untuk "memperbaiki paksa" catatan sejarah di database.
@@ -12,3 +12,11 @@ migrate -database "postgres://user:password@localhost:5431/accounts?sslmode=disa
 
 Step 3: Menjalankan kembali migrasi dari awal pada database yang bersih.
 migrate -database "postgres://user:password@localhost:5431/accounts?sslmode=disable" -path ./db/migrations up
+
+Skenario 2: Kolom database berbeda dengan yg dibuat di kode
+ migrate -database "postgres://user:supersecret123@localhost:5431/accounts?sslmode=disable" -path ./db/migrations down
+ migrate -database "postgres://user:supersecret123@localhost:5431/accounts?sslmode=disable" -path ./db/migrations up
+
+
+ Skenario 3 : Shortcut docker down->build->up
+ docker-compose up -d --build

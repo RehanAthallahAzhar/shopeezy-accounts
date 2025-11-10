@@ -9,11 +9,12 @@ import (
 // AppConfig adalah struct konfigurasi utama yang menggabungkan semua
 // konfigurasi lainnya menggunakan struct embedding.
 type AppConfig struct {
-	Database DatabaseConfig
-	Redis    RedisConfig
-	GRPC     GrpcConfig
-	Server   ServerConfig
-	RabbitMQ struct { // Bisa juga didefinisikan inline jika sederhana
+	Database  DatabaseConfig
+	Migration MigrationConfig
+	Redis     RedisConfig
+	GRPC      GrpcConfig
+	Server    ServerConfig
+	RabbitMQ  struct {
 		URL string `env:"RABBITMQ_URL,required"`
 	}
 }

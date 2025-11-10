@@ -73,8 +73,7 @@ func main() {
 	)
 
 	m, err := migrate.New(
-		// "file://../../db/migrations", // Local DB
-		"file://db/migrations", // Container DB
+		cfg.Migration.Path,
 		connectionString,
 	)
 	if err != nil {
